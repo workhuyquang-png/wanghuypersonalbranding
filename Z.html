@@ -1,0 +1,445 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+		<meta charset="utf-8">
+		<script>(function(){try{var m={"en-US":["https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/translation-Dw6qE_bP.js","https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/mcp_servers-x2NOblEu.js","https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/mcp_tools-alv7CSY6.js"],"zh-CN":["https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/translation-Dd4rjnoQ.js","https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/mcp_servers-_9sXXz4r.js","https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/mcp_tools-xIRtNAcK.js"]};var u=m[(function (stored, navLang) {
+	var lang = stored == null ? (String(navLang).indexOf('zh') > -1 ? 'zh-CN' : 'en-US') : stored;
+	return String(lang).toLowerCase().indexOf('zh') === 0 ? 'zh-CN' : 'en-US';
+})(localStorage.getItem('locale'),navigator.language)];for(var i=0;i<u.length;i++){var l=document.createElement("link");l.rel="modulepreload";l.crossOrigin="";l.setAttribute("fetchpriority","high");l.href=u[i];document.head.appendChild(l);}}catch(e){}})();</script>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+		<meta name="referrer" content="no-referrer">
+		
+		
+		<script>
+			// /scheduled 的首屏纹理是该页面的 LCP 图片。只在直接进入该路由时提前请求，
+			// 避免全站页面都下载这张较大的装饰图。
+			if (location.pathname === '/scheduled' || location.pathname.startsWith('/scheduled/')) {
+				var scheduledHeroPreload = document.createElement('link');
+				scheduledHeroPreload.rel = 'preload';
+				scheduledHeroPreload.as = 'image';
+				scheduledHeroPreload.type = 'image/webp';
+				scheduledHeroPreload.href = '/static/scheduled/hero-texture.webp';
+				scheduledHeroPreload.fetchPriority = 'high';
+				document.head.appendChild(scheduledHeroPreload);
+			}
+		</script>
+		<link rel="icon" type="image/png" sizes="512x512" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg">
+		<link rel="shortcut icon" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg">
+		<link rel="apple-touch-icon" sizes="512x512" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg">
+		<meta name="apple-mobile-web-app-title" content="Z.ai - Advanced AI Chatbot &amp; Agent powered by GLM-5.3-Flash">
+		<link rel="manifest" href="https://z-cdn.chatglm.cn/z-ai/frontend/static/manifest.json">
+		<script>
+			// initTheme（对应源码 index.html:126-170 防 FOUC 内联脚本）：缺省 light，
+			// 同步 <html> 的 light/dark class 与 meta[name=theme-color]。
+			// 上游 91ad73571：theme === 'system' 按浏览器偏好解析成 light/dark，不再把 'system' 直接当 class 挂上去。
+			(function () {
+				var metaThemeColorTag = document.querySelector('meta[name="theme-color"]');
+				var prefersTheme = 'light';
+
+				if (!localStorage?.theme) {
+					localStorage.theme = prefersTheme;
+				}
+
+				var theme;
+				if (localStorage.theme === 'system') {
+					// 跟随系统：按浏览器偏好解析；新用户默认值仍是上面的 prefersTheme
+					theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				} else if (localStorage.theme === 'light') {
+					theme = 'light';
+				} else {
+					theme = 'dark';
+					// ★ open-webui 遗留的 oled-dark / rose-pine 等主题名一律按深色处理，并改写成 'dark'，
+					// 设置页的外观选项只认 system / light / dark
+					if (localStorage.theme !== 'dark') localStorage.theme = 'dark';
+				}
+				document.documentElement.classList.add(theme);
+				if (metaThemeColorTag)
+					metaThemeColorTag.setAttribute('content', theme === 'light' ? '#F4F6F8' : '#141618');
+			})();
+		</script>
+		<script>
+			// 源 index.html:68-120 逐字搬迁。这段是 sessionStorage['performance'] 的
+			// 唯一写入方，RootLayout 的 initMainTracker 上报就是读它。必须放在
+			// 模块包之前，否则 navigation/paint 的 entry 已经错过了。
+			let metrics = {};
+			const observer = new PerformanceObserver((list) => {
+				const entries = list.getEntries();
+
+				entries.forEach((entry) => {
+					// 根据不同的entry类型处理不同的性能指标
+					switch (entry.entryType) {
+						case 'navigation':
+							{
+								const navEntry = entry;
+								metrics = {
+									...metrics,
+									dns: navEntry.domainLookupEnd - navEntry.domainLookupStart,
+									response: navEntry.responseEnd - navEntry.responseStart,
+									dom_parse: navEntry.domInteractive - navEntry.responseEnd,
+									dom_ready: navEntry.domContentLoadedEventEnd - navEntry.fetchStart,
+									resource: navEntry.domComplete - navEntry.domContentLoadedEventEnd,
+									first_interactive: navEntry.domInteractive - navEntry.fetchStart,
+									first_byte: navEntry.responseStart - navEntry.domainLookupStart,
+									loaded: navEntry.loadEventEnd - navEntry.fetchStart
+								};
+								sessionStorage.setItem('performance', JSON.stringify(metrics));
+								// 发送性能指标到阿里云日志服务
+							}
+							break;
+
+						case 'paint':
+							if (entry.name === 'first-paint') {
+								metrics = {
+									...metrics,
+									first_paint: entry.startTime
+								};
+								sessionStorage.setItem('performance', JSON.stringify(metrics));
+							}
+							if (entry.name === 'first-contentful-paint') {
+								metrics = {
+									...metrics,
+									first_contentful_paint: entry.startTime
+								};
+								sessionStorage.setItem('performance', JSON.stringify(metrics));
+							}
+							break;
+					}
+				});
+			});
+
+			// 观察的性能指标类型
+			observer.observe({
+				entryTypes: ['navigation', 'paint']
+			});
+		</script>
+		<script>
+			// 先建立队列，业务埋点可立即调用；外部 GA 脚本等 window.load 后空闲加载，
+			// 避免第三方请求与首屏 JS、字体和图片争抢网络。
+			(function () {
+				window.dataLayer = window.dataLayer || [];
+				window.gtag = function () {
+					window.dataLayer.push(arguments);
+				};
+				window.gtag('js', new Date());
+				window.gtag('config', 'G-Z8QTHYBHP3');
+
+				var loadGa = function () {
+					var script = document.createElement('script');
+					script.async = true;
+					script.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z8QTHYBHP3';
+					document.head.appendChild(script);
+				};
+				var scheduleGa = function () {
+					if ('requestIdleCallback' in window) {
+						window.requestIdleCallback(loadGa, { timeout: 4000 });
+					} else {
+						window.setTimeout(loadGa, 1000);
+					}
+				};
+				if (document.readyState === 'complete') scheduleGa();
+				else window.addEventListener('load', scheduleGa, { once: true });
+			})();
+		</script>
+		<!-- gtm:begin -->
+		<!-- Google Tag Manager：注册转化（pushRegistResult 推的 RegistResult）由它按 _channel_track_key
+		     分发给 Google / Meta。GTM 会带出 FB / Reddit / Bing / Twitter / Clarity 等一百多个第三方请求，
+		     和首屏抢带宽、主线程（11-06 审计：全部屏蔽后冷启动 FCP 2.6s → 1.9s），所以按路由分两种：
+		     - /auth/* 立即加载：注册（含 OAuth 回调）只发生在这些页面，注册成功后可能马上整页跳走（SSO 回跳），
+		       容器没加载完转化就丢了；
+		     - 其他页面和 GA、RUM 一样，等 window.load 后空闲时再加载。
+		     window.__loadGtm 可重复调用；pushRegistResult 推完事件也会调一次兜底（GTM 加载后会处理队列里已有的事件）。
+		     GTM 挂住时 window.load 会被拖住，REGION=cn 的构建由 vite.config.ts 的 stripGtm 整段删掉
+		     （国内被墙，也用不上海外转化），那时 __loadGtm 不存在，调用方要判空。 -->
+		<script>
+			(function (w, d) {
+				var loaded = false;
+				w.__loadGtm = function () {
+					if (loaded) return;
+					loaded = true;
+					w.dataLayer = w.dataLayer || [];
+					w.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+					var j = d.createElement('script');
+					j.async = true;
+					j.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-T9CBCLPX';
+					d.head.appendChild(j);
+				};
+				if (location.pathname === '/auth' || location.pathname.indexOf('/auth/') === 0) {
+					w.__loadGtm();
+					return;
+				}
+				var scheduleGtm = function () {
+					if ('requestIdleCallback' in w) {
+						w.requestIdleCallback(w.__loadGtm, { timeout: 4000 });
+					} else {
+						w.setTimeout(w.__loadGtm, 1000);
+					}
+				};
+				if (d.readyState === 'complete') scheduleGtm();
+				else w.addEventListener('load', scheduleGtm, { once: true });
+			})(window, document);
+		</script>
+		<!-- gtm:end -->
+		<script>
+			// GLOBAL_FETCHES 预取（对应源码 index.html:343-380）：
+			// 在模块包下载/执行期间并行预取首屏四个请求，RootLayout 启动链路按
+			// config → (session, settings) 顺序消费（models 由 getModels 自取）。
+			// 语义：session/config/settings 非 2xx 时 reject 响应 JSON；
+			// models 为裸 fetch 不判错；无 token 时 models 链在 session 后串行、
+			// settings 直接为 false。
+			(function () {
+				var token = localStorage.getItem('token');
+				var activeCookieV2 = localStorage.getItem('web_session_mode') === 'cookie_v2';
+				var pendingCookieV2OAuth =
+					sessionStorage.getItem('web_session_pending_mode') === 'cookie_v2' &&
+					!!sessionStorage.getItem('oauth_provider');
+				var cookieV2 = activeCookieV2 || pendingCookieV2OAuth;
+				var base = window.WEBUI_BASE_URL || '';
+				// 文档 §3.1：同源用 same-origin，跨 origin 部署（pnpm run dev 直连 8080）必须 include，
+				// 否则会话 Cookie 根本发不出去。
+				var crossOrigin = false;
+				try {
+					crossOrigin = !!base && new URL(base, location.href).origin !== location.origin;
+				} catch (e) {}
+				var lang = localStorage.locale ?? (navigator.language.includes('zh') ? 'zh-CN' : 'en-US');
+				var config = {
+					credentials: cookieV2 && !crossOrigin ? 'same-origin' : 'include',
+					headers: Object.assign(
+						{
+							Accept: 'application/json',
+							'Content-Type': 'application/json'
+						},
+						!cookieV2 && token ? { Authorization: 'Bearer ' + token } : {},
+						{ 'Accept-Language': lang }
+					)
+				};
+				// 抛出物带上 HTTP 状态和 Retry-After：cookie_v2 的会话恢复要据此区分可重试
+				// （429/503/网络错误）并退避；非 JSON 的错误体也要兜住，不然 reject 的是 SyntaxError。
+				var throwIfNotOk = function (res) {
+					if (!res.ok) {
+						var meta = { status: res.status };
+						var retryAfter = Number(res.headers.get('Retry-After'));
+						if (retryAfter > 0) meta.retry_after_seconds = retryAfter;
+						return res.json().then(
+							function (e) {
+								if (e && typeof e === 'object' && !Array.isArray(e)) throw Object.assign(meta, e);
+								throw Object.assign(meta, { detail: e });
+							},
+							function () {
+								throw meta;
+							}
+						);
+					}
+					return res.json();
+				};
+				var session = fetch(
+					base + '/api/v1/auths/' + (cookieV2 ? '?session_mode=cookie_v2' : ''),
+					config
+				).then(throwIfNotOk);
+				var conf = fetch(base + '/api/config', config).then(throwIfNotOk);
+				var models =
+					token || cookieV2
+						? fetch(base + '/api/models', config)
+						: session.then(function () {
+								return fetch(base + '/api/models', config);
+							});
+				var settings =
+					(token || cookieV2) &&
+					fetch(base + '/api/v1/users/user/settings', config).then(throwIfNotOk);
+				window.GLOBAL_FETCHES = {
+					session: session,
+					config: conf,
+					models: models,
+					settings: settings
+				};
+				// 预取可能早于 RootLayout 消费就 reject（如 session 401），先挂 no-op catch
+				// 防 unhandledrejection；消费方仍从原 promise 拿到 rejection。
+				session.catch(function () {});
+				conf.catch(function () {});
+				if (models) models.catch(function () {});
+				if (settings) settings.catch(function () {});
+			})();
+		</script>
+		<script type="module" crossorigin="" src="https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/index-BhGGdzNj.js"></script>
+		<link rel="stylesheet" crossorigin="" href="https://z-cdn.chatglm.cn/z-ai/frontend/prod-fe-1.2.5/assets/index-ZM9Rdxyv.css">
+	<title>Z.AI Share</title><meta name="description" content="Amazing content sharing from Z.AI"><meta property="og:type" content="website"><meta property="og:site_name" content="Z.AI"><meta property="og:title" content="Z.AI Share"><meta property="og:description" content="Amazing content sharing from Z.AI"><meta property="og:image" content="https://z-cdn.chatglm.cn/z-ai/static/share-logo.png"><meta property="og:image:alt" content="Z.AI Share"><meta property="og:image:width" content="400"><meta property="og:image:height" content="400"><meta property="og:image:type" content="image/png"><meta property="og:url" content="http://chat.z.ai/space/m10jw91nkbm1-art"><meta property="article:author" content="Z.AI"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Z.AI Share"><meta name="twitter:description" content="Amazing content sharing from Z.AI"><meta name="twitter:image" content="https://z-cdn.chatglm.cn/z-ai/static/share-logo.png"><meta name="twitter:image:alt" content="Z.AI Share"><meta name="robots" content="index,follow"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="application-name" content="Z.AI"><meta name="theme-color" content="#1976d2"><meta name="msapplication-TileColor" content="#1976d2"><link rel="canonical" href="http://chat.z.ai/space/m10jw91nkbm1-art"><script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+<script>
+(function() {
+  var frontendCallId = Math.random().toString(36).substring(2, 8);
+  console.log('[WeChat-Frontend-' + frontendCallId + '] ===== 开始前端微信JS-SDK初始化 =====');
+  console.log('[WeChat-Frontend-' + frontendCallId + '] 当前页面URL:', window.location.href);
+  console.log('[WeChat-Frontend-' + frontendCallId + '] 当前页面URL (去掉#):', window.location.href.split('#')[0]);
+  console.log('[WeChat-Frontend-' + frontendCallId + '] 签名配置:', {
+    debug: false,
+    appId: 'wxa5796e47c57570b1',
+    timestamp: 1794397667,
+    nonceStr: 'exRmauJJ6HQhIlcs',
+    signature: '40963cb26768764139cf4c795b30562910c567ce',
+    jsApiList: ["updateAppMessageShareData","updateTimelineShareData","onMenuShareAppMessage","onMenuShareTimeline"]
+  });
+
+  // 微信 JS-SDK 配置
+  wx.config({
+    debug: false, // 根据环境变量设置debug模式
+    appId: 'wxa5796e47c57570b1', // 公众号的唯一标识
+    timestamp: 1794397667, // 生成签名的时间戳
+    nonceStr: 'exRmauJJ6HQhIlcs', // 生成签名的随机串
+    signature: '40963cb26768764139cf4c795b30562910c567ce', // 签名
+    jsApiList: ["updateAppMessageShareData","updateTimelineShareData","onMenuShareAppMessage","onMenuShareTimeline"] // 需要使用的JS接口列表
+  });
+
+  console.log('[WeChat-Frontend-' + frontendCallId + '] wx.config() 调用完成');
+
+  // 微信 JS-SDK 就绪回调
+  wx.ready(function () {
+    console.log('[WeChat-Frontend-' + frontendCallId + '] WeChat JS-SDK ready - 微信JS-SDK就绪!');
+
+    // 分享给朋友的配置
+    console.log('[WeChat-Frontend-' + frontendCallId + '] 开始配置分享给朋友...');
+    wx.updateAppMessageShareData({
+      title: 'Z.AI Share',
+      desc: 'Amazing content sharing from Z.AI',
+      link: 'http://chat.z.ai/space/m10jw91nkbm1-art',
+      imgUrl: 'https://z-cdn.chatglm.cn/z-ai/static/share-logo.png',
+      success: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 分享给朋友成功');
+      },
+      cancel: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 分享给朋友取消');
+      }
+    });
+
+    // 分享到朋友圈的配置
+    console.log('[WeChat-Frontend-' + frontendCallId + '] 开始配置分享到朋友圈...');
+    wx.updateTimelineShareData({
+      title: 'Z.AI Share',
+      link: 'http://chat.z.ai/space/m10jw91nkbm1-art',
+      imgUrl: 'https://z-cdn.chatglm.cn/z-ai/static/share-logo.png',
+      success: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 分享到朋友圈成功');
+      },
+      cancel: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 分享到朋友圈取消');
+      }
+    });
+
+    // 兼容旧版本微信客户端
+    console.log('[WeChat-Frontend-' + frontendCallId + '] 开始配置兼容旧版本分享...');
+    wx.onMenuShareAppMessage({
+      title: 'Z.AI Share',
+      desc: 'Amazing content sharing from Z.AI',
+      link: 'http://chat.z.ai/space/m10jw91nkbm1-art',
+      imgUrl: 'https://z-cdn.chatglm.cn/z-ai/static/share-logo.png',
+      success: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 兼容版分享给朋友成功');
+      },
+      cancel: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 兼容版分享给朋友取消');
+      }
+    });
+
+    wx.onMenuShareTimeline({
+      title: 'Z.AI Share',
+      link: 'http://chat.z.ai/space/m10jw91nkbm1-art',
+      imgUrl: 'https://z-cdn.chatglm.cn/z-ai/static/share-logo.png',
+      success: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 兼容版分享到朋友圈成功');
+      },
+      cancel: function () {
+        console.log('[WeChat-Frontend-' + frontendCallId + '] 兼容版分享到朋友圈取消');
+      }
+    });
+
+    console.log('[WeChat-Frontend-' + frontendCallId + '] 所有分享配置完成');
+  });
+
+  // 微信 JS-SDK 错误回调
+  wx.error(function(res){
+    console.error('[WeChat-Frontend-' + frontendCallId + '] 微信JS-SDK错误:', res);
+    console.error('[WeChat-Frontend-' + frontendCallId + '] 错误详情:', JSON.stringify(res, null, 2));
+    // 可以在这里处理签名验证失败等错误
+  });
+
+  console.log('[WeChat-Frontend-' + frontendCallId + '] ===== 微信JS-SDK初始化完成 =====');
+})();
+</script></head>
+	<body>
+		<!-- gtm:begin -->
+		<noscript>
+			<iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-T9CBCLPX"
+				height="0"
+				width="0"
+				style="display: none; visibility: hidden"
+			></iframe>
+		</noscript>
+		<!-- gtm:end -->
+		<script>
+			// 同步写入配置，但把第三方 SDK 延迟到 window.load 后的空闲时段。
+			// RUM_READY 让 React 中早于 SDK 的 setConfig/sendEvent 调用可以排队，不丢数据。
+			(function () {
+				var rumEnv = location.hostname === 'chat.z.ai' ? 'prod' : 'pre';
+				window.__rum = {
+					pid: 'j2c03hoppk@9a8be198b65ba4b',
+					endpoint: 'https://j2c03hoppk-default-cn.rum.aliyuncs.com',
+					env: rumEnv,
+					spaMode: 'history',
+					collectors: {
+						perf: true,
+						webVitals: false,
+						api: true,
+						staticResource: true,
+						jsError: true,
+						consoleError: false,
+						action: true
+					},
+					tracing: false,
+					parseViewName: function (url) {
+						var pathname = new URL(url).pathname;
+						if (!pathname) return '/';
+						return pathname.replace(/(.*)\/[a-f0-9-]+$/g, '$1');
+					},
+					evaluateApi: function (options, response) {
+						var traceId = response?.headers?.get?.('X-Trace-Id') || 'unknown';
+						return {
+							name: options.url.replace(/\/[a-f0-9-]{36}/g, '/**'),
+							properties: { traceId: traceId }
+						};
+					}
+				};
+
+				window.RUM_READY = new Promise(function (resolve) {
+					var loadRum = function () {
+						var script = document.createElement('script');
+						script.crossOrigin = 'anonymous';
+						script.src = 'https://sdk.rum.aliyuncs.com/v2/browser-sdk.js';
+						script.onload = function () {
+							resolve(window.RumSDK);
+						};
+						script.onerror = function () {
+							resolve(undefined);
+						};
+						document.body.insertBefore(script, document.body.firstChild);
+					};
+					var scheduleRum = function () {
+						if ('requestIdleCallback' in window) {
+							window.requestIdleCallback(loadRum, { timeout: 4000 });
+						} else {
+							window.setTimeout(loadRum, 1000);
+						}
+					};
+					if (document.readyState === 'complete') scheduleRum();
+					else window.addEventListener('load', scheduleRum, { once: true });
+				});
+			})();
+		</script>
+		<div id="app" style="display: contents"></div>
+	
+
+
+</body></html><!-- 阿里云 RUM SDK 引导和 PerformanceObserver 采集已于第 17 轮补齐（见归档 docs/TASK2-GAP-AUDIT.md）。
+     第 8 轮补齐移动端相关的那批：viewport 的 maximum-scale=1（源 :45）、apple-touch-icon /
+     shortcut icon / icon 的 type+sizes（源 :5-16）、apple-mobile-web-app-title（源 :17-20）、
+     manifest（源 :42，指向和上游同一个 CDN 地址）。
+     GTM 引导（含 noscript）已补：注册转化靠它分发，不是纯统计；REGION=cn 构建不注入。
+     仍未搬（纯 SEO，与移动端布局交互无关）：description / keywords（源 :21-28）、
+     opensearch（源 :49-54）、控制台 ASCII logo、外链 jquery。
+     不搬：全局 resizeIframe（PPT 组件用的是自己 throttle 出的同名局部函数）、
+     .animate-pulse-fast 内联样式（两棵树 src/ 里 0 处引用，死 CSS）。 -->
